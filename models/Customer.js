@@ -21,6 +21,12 @@ const customerSchema = new mongoose.Schema({
         require: true,
         trim: true
     },
+    orders: [
+        {
+            type: mongoose.Types.ObjectId,
+            ref: 'Order',
+        },
+    ],
 
 },
 
