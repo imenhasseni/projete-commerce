@@ -13,7 +13,7 @@ passport.use(
     new Strategy(options, async ({ id }, done) => {
         // console.log('Now in middleware'); => pour voir si on est dans le middlwares
         try {
-            const user = await User.findById(id);
+            const user = await User.findById(id).populate('orders');
             if (!user) {
                 // done(null, "User not found")
                 throw new Error('User not foound');

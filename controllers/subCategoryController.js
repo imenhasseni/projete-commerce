@@ -115,9 +115,13 @@ updatesubCategory = async (req, res) => {
 
 deletesubCategory = async (req, res) => {
     try {
+        await subCategory 
+        await Category.findByIdAndUpdate(subCategory.category, {
+            $pull: {  subCategories: subCategory },
+        });
         await SubCategory.deleteOne({ _id: req.params.id });
         res.status(201).json({
-            message: " SubCategory deleted! ",
+            message: " deleted !",
             success: true
         });
     } catch (error) {

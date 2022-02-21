@@ -11,6 +11,8 @@ const passport = require('passport');
 const categoryroute = require("./routes/categoryRoute");
 const productroute = require("./routes/productRoutes");
 const subCategoryroute = require("./routes/subCategoryRoutes");
+const orderroute = require("./routes/orderRoute");
+
 
 // Initialize the application
 const app = express();
@@ -21,11 +23,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(passport.initialize());
 
+
 //Routes
+
 app.use('/', authRoute);
 app.use('/category', categoryroute);
 app.use('/product', productroute);
 app.use('/subCategory', subCategoryroute);
+app.use('/order', orderroute);
+
+
+
+
 
 //start lestenting for the server on port
 app.listen(PORT, async () => {

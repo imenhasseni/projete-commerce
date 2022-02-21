@@ -22,4 +22,5 @@ route.get('/profile', passport.authenticate('jwt', { session: false }), authenti
 route.put('/updateProfile', passport.authenticate('jwt', { session: false }), authentificationController.updateProfile);
 
 
+
 module.exports = route;
