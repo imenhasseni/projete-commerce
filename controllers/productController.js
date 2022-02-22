@@ -119,9 +119,15 @@ updateProduct = async (req, res) => {
 
 deleteProduct = async (req, res) => {
     try {
+        const product = await Product.findById({ _id: req.params.id });
+        // console.log(product.subcategory);
+        // pour suprrime le product dans la subcategory
+        await SubCategory.findByIdAndUpdate(product.subcategory, {
+            $pull: { products: product._id },
+        });
         await Product.deleteOne({ _id: req.params.id });
         res.status(201).json({
-            message: "product deleted !",
+            message: " Product deleted !",
             success: true
         });
     } catch (error) {

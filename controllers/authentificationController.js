@@ -1,13 +1,23 @@
 const Customer = require('../models/Customer');
 const bcrypt = require('bcrypt');
 const { randomBytes } = require('crypto');
-const DOMAIN = process.env.APP_DOMAIN;
 const { join } = require('path');
-const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+
+
+const DOMAIN = process.env.APP_DOMAIN;
 const SECRET = process.env.APP_SECRET;
 
+//module de token 
+const randtoken = require("rand-token");
+// tab ou on met les refresh tokens
+var RefreshTokens = [];
+
+
+const nodemailer = require('nodemailer');
+const { default: consolaGlobalInstance } = require('consola');
+const { equal } = require('assert');
 
 var transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -94,7 +104,7 @@ verifyEmail = async (req, res) => {
         res.sendFile(join(__dirname, "../Templates/errors.html")
         );
     }
-}
+};
 
 login = async (req, res) => {
 
@@ -104,13 +114,18 @@ login = async (req, res) => {
         let user = await User.findOne({ email });
 
         if (!user) {
-            return res.
-                status(404).json({ status: 404, message: 'email not found !' });
+            return res.status(404).json({
+                status: 404,
+                message: 'email not found !'
+            });
         }
         if (user.verified === true) {
             const passwordCompare = bcrypt.compareSync(password, user.password);
             if (!passwordCompare) {
-                return res.status(404).json({ status: 404, message: 'password Incorrect !' });
+                return res.status(404).json({
+                    status: 404,
+                    message: 'password Incorrect !'
+                });
             }
 
             // 2 eme étape creation de token
@@ -125,11 +140,22 @@ login = async (req, res) => {
                 }
                 /* {expireIn: '24h'} */
             );
+            //creation de refresh token 
+           // var refreshToken = randtoken.uid(256);
+           // RefreshTokens[refreshToken]= user._id;
+            var refreshToken = jwt.sign({ id: user._id}, SECRET,{
+                expiresIn: 86400 // 24 hours
+            });
+            RefreshTokens[refreshToken] = user._id;
+
             const result = {
                 email: user.email,
                 user: user,
                 token: token,
                 expiresIn: 1,
+                //affichage de refresh token
+                //key : value
+                refreshtoken: refreshToken,
             }
 
             return res.status(200).json({
@@ -147,7 +173,42 @@ login = async (req, res) => {
     } catch (error) {
         res.status(404).json({ status: 404, message: error.message });
     }
-}
+};
+
+tokenrefresh = async (req, res) => {
+    try {
+        const refreshToken = req.body.refreshToken;
+
+        console.log(req.user._id);
+        console.log(RefreshTokens);
+        console.log(RefreshTokens[refreshToken]);
+        console.log("refresh egalite", RefreshTokens[refreshToken] == req.user._id);
+        console.log("refresh", refreshToken in RefreshTokens);
+
+        if (refreshToken in RefreshTokens /* && RefreshTokens[refreshTToken] == req.user._id */) {
+            const token = jwt.sign(
+                {
+                    user: req.user,
+                },
+                SECRET,
+                {
+                    expiresIn: '7 days',
+                }
+            );
+            res.status(200).json({
+                accesstoken: token,
+            });
+        } else{
+            res.status(401).json({
+                message: error.message,
+            })
+        }
+    } catch (error) {
+        res.status('404').json({
+            message: error.message,
+        });
+    }
+};
 
 profile = async (req, res) => {
     try {
@@ -183,6 +244,7 @@ module.exports =
     registerCustomer,
     verifyEmail,
     login,
+    tokenrefresh,
     profile,
     updateProfile
 }

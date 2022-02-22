@@ -1,5 +1,6 @@
 const SubCategory = require('../models/SubCategory');
 const Category = require('../models/Category');
+const { findById } = require('../models/SubCategory');
 
 //create SubCategory
 
@@ -7,8 +8,8 @@ createSubCategory = async (req, res) => {
     try {
         const newSubCategory = new SubCategory(req.body);
         await newSubCategory.save();
-        await Category.findByIdAndUpdate(req.body.category,{
-            $push: { subCategories: newSubCategory},
+        await Category.findByIdAndUpdate(req.body.category, {
+            $push: { subCategories: newSubCategory },
         });
 
         res.status(201).json({
@@ -81,13 +82,13 @@ subCategoryByName = async (req, res) => {
 
 subCategoryByCategory = async (req, res) => {
     try {
-        const subCategory = await SubCategory.find({category: req.query.category}).populate('category').populate('products');
+        const subCategory = await SubCategory.find({ category: req.query.category }).populate('category').populate('products');
         res.status(200).json({
             message: 'SubCategory by category founded',
-            status:200,
+            status: 200,
             data: subCategory,
             success: true
-            
+
         });
     } catch (error) {
         res.status(400).json({
@@ -115,9 +116,12 @@ updatesubCategory = async (req, res) => {
 
 deletesubCategory = async (req, res) => {
     try {
-        await subCategory 
+
+        const subCategory = await SubCategory.findById({ _id: req.params.id });
+        //console.log(subCategory.category);
+        // pour suprrime le subcategory dans category aussi 
         await Category.findByIdAndUpdate(subCategory.category, {
-            $pull: {  subCategories: subCategory },
+            $pull: { subCategories: subCategory._id },
         });
         await SubCategory.deleteOne({ _id: req.params.id });
         res.status(201).json({
