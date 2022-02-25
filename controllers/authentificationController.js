@@ -16,8 +16,7 @@ var RefreshTokens = [];
 
 
 const nodemailer = require('nodemailer');
-const { default: consolaGlobalInstance } = require('consola');
-const { equal } = require('assert');
+
 
 var transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -141,9 +140,9 @@ login = async (req, res) => {
                 /* {expireIn: '24h'} */
             );
             //creation de refresh token 
-           // var refreshToken = randtoken.uid(256);
-           // RefreshTokens[refreshToken]= user._id;
-            var refreshToken = jwt.sign({ id: user._id}, SECRET,{
+            // var refreshToken = randtoken.uid(256);
+            // RefreshTokens[refreshToken]= user._id;
+            var refreshToken = jwt.sign({ id: user._id }, SECRET, {
                 expiresIn: 86400 // 24 hours
             });
             RefreshTokens[refreshToken] = user._id;
@@ -178,13 +177,11 @@ login = async (req, res) => {
 tokenrefresh = async (req, res) => {
     try {
         const refreshToken = req.body.refreshToken;
-
         console.log(req.user._id);
         console.log(RefreshTokens);
         console.log(RefreshTokens[refreshToken]);
         console.log("refresh egalite", RefreshTokens[refreshToken] == req.user._id);
         console.log("refresh", refreshToken in RefreshTokens);
-
         if (refreshToken in RefreshTokens /* && RefreshTokens[refreshTToken] == req.user._id */) {
             const token = jwt.sign(
                 {
@@ -198,7 +195,7 @@ tokenrefresh = async (req, res) => {
             res.status(200).json({
                 accesstoken: token,
             });
-        } else{
+        } else {
             res.status(401).json({
                 message: error.message,
             })
@@ -239,6 +236,93 @@ updateProfile = async (req, res) => {
     }
 }
 
+forgetPassword = async (req, res) => {
+    try {
+        const email = req.body.email;
+        const user = await User.findOne({ email });
+       // console.log(user);
+        if (!user) {
+            return res.status(400).json({
+                message: "Email does not exist",
+            });
+        }
+        const token = jwt.sign({ _id: user._id }, SECRET, { expiresIn: "2h" });
+        //const updateuser = 
+        await User.findOneAndUpdate(
+            { email: email },
+            { resetPasswordToken: token },
+        );
+        //console.log(updateuser);
+        transporter.sendMail(
+            {
+                to: email,
+                subject: "Forget Password",
+                text: "Bonjourr mr",
+                html: `<!DOCTYPE html>
+                 <html lang="en">
+                 <head>
+                     <meta charset="UTF-8">
+                     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                     <title>Document</title>
+                 </head>
+                 <body>
+                 <a href="${DOMAIN}/reset/${token}">Reset Password </a>  
+                 </body>
+                 </html>`,
+            },
+            (err, info) => {
+                 if(err){
+                     console.log("error : ", err.message);
+                 }else{
+                     console.log("Email sent : ", info.response);
+                 }
+            }
+           
+        );
+        return res.status(200).json({
+            message: 'Success',
+        });
+    } catch (error) {
+        res.status(400).json({
+            message: "Hurrray! check your email address",
+        });
+ 
+    }
+}
+
+resetpassword = async (req, res) => {
+    try {
+        const resetPasswordToken = req.params.resetPasswordToken;
+
+        if (resetPasswordToken) {
+            //pour verifier date d'expiration de resetPasswordToken
+            jwt.verify(resetPasswordToken,SECRET, async err => {
+                if(err){
+                    return res.json({
+                        error: 'incorrect token or it is exprired',
+                    });
+                }
+                const user = await User.findOne({
+                    resetPasswordToken: resetPasswordToken,
+                });
+
+                user.password = bcrypt.hashSync(req.body.newPass, 10);
+                user.save();
+
+                return res.status(200).json({
+                    message: 'password has been changed',
+                });
+
+            });
+        }
+    } catch (error) {
+        res.status(404).json({
+            message: error.message,
+        });
+    }
+}
+
 module.exports =
 {
     registerCustomer,
@@ -246,5 +330,8 @@ module.exports =
     login,
     tokenrefresh,
     profile,
-    updateProfile
+    updateProfile,
+    forgetPassword,
+    resetpassword
+    
 }

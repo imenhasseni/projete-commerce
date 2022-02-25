@@ -15,12 +15,16 @@ route.get('/verify-now/:verificationCode', authentificationController.verifyEmai
 route.post('/login', authentificationController.login);
 
 route.post('/tokenrefresh', passport.authenticate('jwt', { session: false }), authentificationController.tokenrefresh );
-// 1ere methode avec modle jwt
+// 1ere methode avec module jwt
 // route.get('/profile', check_auth, authentificationController.profile)
 // 2eme methode profile avec les modules passport et passport-jwt
 route.post('/profile', passport.authenticate('jwt', { session: false }), authentificationController.profile);
 
 route.put('/updateProfile', passport.authenticate('jwt', { session: false }), authentificationController.updateProfile);
+
+route.get('/forgetPassword', authentificationController.forgetPassword);
+
+route.get('/reset/:resetPasswordToken', authentificationController.resetpassword);
 
 
 

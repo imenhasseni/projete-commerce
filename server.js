@@ -21,6 +21,7 @@ const app = express();
 app.use(cors());//securiter de la partage de ressourse
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
 app.use(passport.initialize());
 
 
@@ -36,7 +37,7 @@ app.use('/order', orderroute);
 
 
 
-//start lestenting for the server on port
+//start listenting for the server on port
 app.listen(PORT, async () => {
     try {
         success({
