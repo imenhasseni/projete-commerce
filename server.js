@@ -21,8 +21,16 @@ const app = express();
 app.use(cors());//securiter de la partage de ressourse
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
+//inisialisation passport
 app.use(passport.initialize());
+
+
+
+//pour faire affichage image sur postman
+
+app.get('/getfile/:image', function(req,res) {
+    res.sendFile(__dirname + '/storages/' + req.params.image);
+});
 
 
 //Routes
